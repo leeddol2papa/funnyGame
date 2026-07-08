@@ -58,13 +58,20 @@
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="text-gray-900 antialiased min-h-screen pb-20">
+<body class="text-gray-900 antialiased min-h-screen pb-20 relative">
 
-    <div class="max-w-4xl mx-auto p-4 sm:p-6 mt-6 sm:mt-12">
+    <!-- 상단 네비게이션 버튼 (공학용 계산기 이동) -->
+    <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
+        <button onclick="window.location.href='CALC.html'" class="neo-btn bg-mzPink px-4 py-2 text-sm sm:text-base transform hover:scale-105">
+            공학용 계산기 🧮
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto p-4 sm:p-6 mt-12 sm:mt-16">
         <!-- 헤더 영역 -->
         <div class="text-center mb-8">
             <h1 class="text-4xl sm:text-5xl font-black mb-3 tracking-tight bg-white inline-block px-6 py-2 border-4 border-black shadow-neo transform -rotate-1">
-                ⚡️ 럭키비키 사다리 🍀
+                ⚡️ 테스트 사다리게임 🍀
             </h1>
             <p class="text-lg font-bold text-gray-700 bg-mzMint inline-block px-3 py-1 border-2 border-black rounded-full mt-2">
                 완전 럭키비키잔앙~ 누가 걸릴까? 👀
