@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡️ 가보자고! MZ 사다리게임 🍀</title>
+    
+    <!-- 폰트 및 Tailwind CSS -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v3.2.1/dist/web/static/pretendard.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 커스텀 스타일 (네오브루탈리즘) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mzPink: '#FF90E8',
+                        mzYellow: '#FFC900',
+                        mzMint: '#B4F8C8',
+                        mzCyan: '#00E5FF'
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neo': '4px 4px 0px 0px rgba(0,0,0,1)',
+                        'neo-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .neo-box {
+                @apply border-4 border-black shadow-neo rounded-xl bg-white;
+            }
+            .neo-btn {
+                @apply border-4 border-black shadow-neo rounded-xl font-black transition-all duration-150 cursor-pointer text-center;
+            }
+            .neo-btn:active {
+                @apply shadow-none translate-x-[4px] translate-y-[4px];
+            }
+            .neo-input {
+                @apply border-4 border-black rounded-lg px-3 py-2 outline-none font-bold transition-colors w-full bg-white;
+            }
+            .neo-input:focus {
+                @apply bg-[#FFFDE7];
+            }
+        }
+        body {
+            background-color: #F4F0EC;
+            background-image: radial-gradient(#000000 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        /* 스크롤바 숨기기 (모바일 깔끔하게) */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-gray-900 antialiased min-h-screen pb-20">
+
+    <div class="max-w-4xl mx-auto p-4 sm:p-6 mt-6 sm:mt-12">
+        <!-- 헤더 영역 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-black mb-3 tracking-tight bg-white inline-block px-6 py-2 border-4 border-black shadow-neo transform -rotate-1">
+                ⚡️ 럭키비키 사다리 🍀
+            </h1>
+            <p class="text-lg font-bold text-gray-700 bg-mzMint inline-block px-3 py-1 border-2 border-black rounded-full mt-2">
+                완전 럭키비키잔앙~ 누가 걸릴까? 👀
+            </p>
+        </div>
+        
+        <!-- 셋업 화면 -->
+        <div id="setup-view" class="bg-white border-4 border-black shadow-neo-lg rounded-2xl p-6 sm:p-10 mb-8 transition-all">
+            <div class="flex flex-col md:flex-row gap-8">
+                
+                <!-- 인원수 설정 -->
+                <div class="flex-shrink-0 flex flex-col items-center justify-center border-4 border-black p-6 rounded-2xl shadow-neo bg-mzPink transform rotate-1 h-fit">
+                    <h2 class="text-xl sm:text-2xl font-black mb-4">참여 인원 🧑‍🤝‍🧑</h2>
+                    <div class="flex items-center text-4xl font-black gap-6 bg-white px-4 py-2 rounded-xl border-4 border-black">
+                        <button id="btn-minus" class="w-10 h-10 bg-gray-200 border-4 border-black rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors pb-1">-</button>
+                        <span id="player-count-display" class="w-8 text-center">4</span>
+                        <button id="btn-plus" class="w-10 h-10 bg-gray-200 border-4 border-black rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors pb-1">+</button>
+                    </div>
+                    <p class="text-sm mt-3 font-bold text-black bg-white/70 px-2 rounded">최소 2명 ~ 최대 8명</p>
+                </div>
+
+                <!-- 플레이어 및 결과 입력 -->
+                <div class="flex-grow">
+                    <div class="flex justify-between items-end mb-4 gap-2">
+                        <h2 class="text-xl sm:text-2xl font-black">참가자 및 당첨 결과 🎯</h2>
+                        <button id="btn-shuffle" class="neo-btn text-sm bg-mzYellow px-3 py-2 flex-shrink-0">
+                            순서 섞기 🔀
+                        </button>
+                    </div>
+                    <div id="inputs-container" class="space-y-3 bg-gray-50 border-4 border-black p-4 rounded-xl max-h-[300px] overflow-y-auto">
+                        <!-- 동적 생성 영역 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button id="btn-start" class="neo-btn w-full md:w-auto text-2xl bg-mzCyan px-12 py-4 transform hover:scale-105">
+                    운을 시험해보자고 🔥 (사다리 생성)
+                </button>
+            </div>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div id="game-view" class="hidden flex-col items-center w-full">
+            <div class="w-full flex flex-col sm:flex-row justify-between items-center mb-10 px-2 gap-4">
+                <h2 class="text-2xl font-black bg-white border-4 border-black px-4 py-1 shadow-neo">결과를 확인해볼까? 둑두구둥 🥁</h2>
+                <button id="btn-back" class="neo-btn bg-white px-4 py-2 text-sm">설정으로 돌아가기 🔙</button>
+            </div>
+            
+            <!-- 사다리 보드 -->
+            <div class="relative w-full border-4 border-black bg-white shadow-neo-lg rounded-2xl p-4 sm:p-8 mt-4 pt-16 pb-16">
+                <!-- 요소들을 정확히 정렬하기 위한 내부 컨테이너 -->
+                <div id="align-container" class="relative w-full h-[55vh] min-h-[400px]">
+                    <canvas id="ladder-canvas" class="absolute inset-0 w-full h-full"></canvas>
+                    
+                    <!-- HTML 오버레이: 플레이어 버튼과 결과 라벨 -->
+                    <div id="players-track" class="absolute top-0 left-0 w-full h-0 z-20"></div>
+                    <div id="results-track" class="absolute bottom-0 left-0 w-full h-0 z-10"></div>
+                </div>
+            </div>
+            
+            <!-- 하단 액션 버튼 -->
+            <div class="mt-12 flex flex-wrap justify-center gap-4 w-full">
+                <button id="btn-quick-result" class="neo-btn flex-1 min-w-[200px] max-w-[300px] bg-mzYellow text-xl py-4 px-6">
+                    스겜스겜 ⚡️ (결과 모두 보기)
+                </button>
+                <button id="btn-reset" class="neo-btn flex-1 min-w-[200px] max-w-[300px] bg-gray-200 text-xl py-4 px-6">
+                    다시 섞기 🔄
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 컨테이너 -->
+    <div id="toast-container" class="fixed bottom-4 right-4 flex flex-col gap-3 z-50 pointer-events-none w-[calc(100%-2rem)] sm:w-auto"></div>
+
+    <script>
+        // --- 앱 상태 ---
+        let playerCount = 4;
+        let players = [];
+        let results = [];
+        let ladderData = [];
+        let paths = []; // 계산된 각 플레이어의 이동 경로
+        let animations = [];
+        let isAnimating = false;
+        
+        // --- 설정 ---
+        const maxRows = 12; // 사다리 가로줄 최대 개수
+        const pathColors = ['#FF3366', '#20D6C7', '#FFDE03', '#9D00FF', '#FF9900', '#00CC66', '#0066FF', '#FF00CC'];
+        const defaultNames = ['😎 지수', '🤪 철수', '🤡 영희', '🤠 민수', '👻 바둑이', '👽 춘식이', '👾 뽀로로', '🤖 루피'];
+        const defaultResults = ['🎉 당첨', '💣 꽝', '💣 꽝', '💣 꽝', '💣 꽝', '💣 꽝', '💣 꽝', '💣 꽝'];
+        
+        // --- DOM 요소 ---
+        const setupView = document.getElementById('setup-view');
+        const gameView = document.getElementById('game-view');
+        const inputsContainer = document.getElementById('inputs-container');
+        const countDisplay = document.getElementById('player-count-display');
+        let canvas, ctx;
+        let canvasWidth, canvasHeight;
+        
+        // --- 초기화 ---
+        function init() {
+            // 초기 배열 세팅
+            players = defaultNames.slice(0, playerCount);
+            results = defaultResults.slice(0, playerCount);
+            renderInputs();
+            
+            // 이벤트 바인딩
+            document.getElementById('btn-plus').addEventListener('click', () => changePlayerCount(1));
+            document.getElementById('btn-minus').addEventListener('click', () => changePlayerCount(-1));
+            document.getElementById('btn-shuffle').addEventListener('click', shuffleInputs);
+            document.getElementById('btn-start').addEventListener('click', startGame);
+            document.getElementById('btn-back').addEventListener('click', goBack);
+            document.getElementById('btn-reset').addEventListener('click', () => { startGame(); }); // 현재 정보로 새 사다리
+            document.getElementById('btn-quick-result').addEventListener('click', showAllResults);
+            
+            // 리사이즈 이벤트
+            window.addEventListener('resize', () => {
+                if (!gameView.classList.contains('hidden')) {
+                    handleResize();
+                }
+            });
+        }
+
+        // --- 셋업 로직 ---
+        function changePlayerCount(delta) {
+            saveCurrentInputs();
+            const newCount = playerCount + delta;
+            if (newCount >= 2 && newCount <= 8) {
+                playerCount = newCount;
+                countDisplay.innerText = playerCount;
+                if (delta > 0) {
+                    players.push(defaultNames[playerCount - 1] || `참가자 ${playerCount}`);
+                    results.push(defaultResults[playerCount - 1] || `결과 ${playerCount}`);
+                } else {
+                    players.pop();
+                    results.pop();
+                }
+                renderInputs();
+            }
+        }
+
+        function saveCurrentInputs() {
+            for (let i = 0; i < playerCount; i++) {
+                const pInput = document.getElementById(`p-input-${i}`);
+                const rInput = document.getElementById(`r-input-${i}`);
+                if (pInput && rInput) {
+                    players[i] = pInput.value.trim() || defaultNames[i];
+                    results[i] = rInput.value.trim() || defaultResults[i];
+                }
+            }
+        }
+
+        function renderInputs() {
+            inputsContainer.innerHTML = '';
+            for (let i = 0; i < playerCount; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full';
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 w-full sm:w-1/2">
+                        <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold flex-shrink-0">${i+1}</div>
+                        <input type="text" id="p-input-${i}" class="neo-input" placeholder="이름" value="${players[i]}">
+                    </div>
+                    <div class="hidden sm:block text-xl font-bold">👉</div>
+                    <div class="flex items-center gap-2 w-full sm:w-1/2">
+                        <span class="sm:hidden text-xl font-bold ml-4">👉</span>
+                        <input type="text" id="r-input-${i}" class="neo-input" placeholder="당첨 결과" value="${results[i]}">
+                    </div>
+                `;
+                inputsContainer.appendChild(row);
+            }
+        }
+
+        function shuffleInputs() {
+            saveCurrentInputs();
+            // 각자 배열을 랜덤하게 섞음 (독립적으로)
+            players.sort(() => Math.random() - 0.5);
+            results.sort(() => Math.random() - 0.5);
+            renderInputs();
+        }
+
+        // --- 게임 시작 및 캔버스 로직 ---
+        function startGame() {
+            saveCurrentInputs();
+            
+            // 1. 사다리 데이터 생성
+            generateLadderData();
+            
+            // 2. 화면 전환
+            setupView.classList.add('hidden');
+            gameView.classList.remove('hidden');
+            gameView.classList.add('flex');
+            
+            // 3. 상태 초기화
+            animations = [];
+            isAnimating = false;
+            document.getElementById('toast-container').innerHTML = '';
+            
+            // 4. 캔버스 초기화
+            canvas = document.getElementById('ladder-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // 5. 그리기 준비
+            handleResize();
+        }
+
+        function goBack() {
+            gameView.classList.add('hidden');
+            gameView.classList.remove('flex');
+            setupView.classList.remove('hidden');
+            document.getElementById('toast-container').innerHTML = '';
+        }
+
+        function generateLadderData() {
+            ladderData = Array.from({ length: maxRows }, () => Array(playerCount - 1).fill(false));
+            for (let r = 0; r < maxRows; r++) {
+                for (let c = 0; c < playerCount - 1; c++) {
+                    // 이전 칸(왼쪽)에 가로줄이 있으면 현재 칸은 못 그음
+                    if (c > 0 && ladderData[r][c - 1]) continue;
+                    // 확률적으로 가로줄 생성 (45% 정도면 적당)
+                    if (Math.random() < 0.45) ladderData[r][c] = true;
+                }
+            }
+        }
+
+        // 화면 크기나 기기가 달라질 때 호출
+        function handleResize() {
+            const container = document.getElementById('align-container');
+            // CSS에서 정의된 실제 픽셀 크기 할당
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            
+            // 경로 계산 (크기에 맞게 픽셀값 업데이트)
+            generatePaths();
+            
+            // 애니메이션 진행중인 경로 객체 참조 업데이트
+            animations.forEach(anim => {
+                anim.path = paths[anim.playerIndex].points;
+            });
+            
+            // HTML UI 요소 (버튼, 라벨) 배치
+            renderGameUI();
+            
+            // 정적 화면(뼈대 및 완료된 선) 그리기
+            drawStaticBoard();
+        }
+
+        // 캔버스 내부 좌표 계산 헬퍼
+        // 모바일일수록 패딩을 좁혀서 넓게 쓴다
+        const getPaddingX = () => window.innerWidth < 600 ? 25 : 60;
+        const paddingY = 20;
+
+        function getColX(col) {
+            const padX = getPaddingX();
+            const availableWidth = canvasWidth - 2 * padX;
+            return padX + col * (availableWidth / (playerCount - 1));
+        }
+
+        function getRowY(row) {
+            const availableHeight = canvasHeight - 2 * paddingY;
+            // row는 0(최상단)부터 maxRows+1(최하단)까지 존재
+            return paddingY + row * (availableHeight / (maxRows + 1));
+        }
+
+        // 각 플레이어별 논리적/시각적 이동 경로 사전 계산
+        function generatePaths() {
+            paths = [];
+            for (let p = 0; p < playerCount; p++) {
+                let currentCol = p;
+                let points = [];
+                
+                // 시작점 (상단)
+                points.push({ x: getColX(currentCol), y: getRowY(0) });
+                
+                for (let r = 0; r < maxRows; r++) {
+                    const nextY = getRowY(r + 1);
+                    // 한 칸 아래로 이동
+                    points.push({ x: getColX(currentCol), y: nextY });
+                    
+                    // 가로줄이 있는지 확인 후 이동
+                    if (currentCol < playerCount - 1 && ladderData[r][currentCol]) {
+                        currentCol++;
+                        points.push({ x: getColX(currentCol), y: nextY });
+                    } else if (currentCol > 0 && ladderData[r][currentCol - 1]) {
+                        currentCol--;
+                        points.push({ x: getColX(currentCol), y: nextY });
+                    }
+                }
+                
+                // 마지막 끝점까지 이동
+                points.push({ x: getColX(currentCol), y: getRowY(maxRows + 1) });
+                
+                paths.push({ 
+                    startPlayer: p, 
+                    endResult: currentCol, 
+                    points: points 
+                });
+            }
+        }
+
+        // 게임 뷰 위에 떠있는 출발 버튼, 도착 라벨 생성
+        function renderGameUI() {
+            const pTrack = document.getElementById('players-track');
+            const rTrack = document.getElementById('results-track');
+            pTrack.innerHTML = '';
+            rTrack.innerHTML = '';
+            
+            for(let i = 0; i < playerCount; i++) {
+                // 출발지 버튼
+                const pBtn = document.createElement('button');
+                pBtn.id = `player-btn-${i}`;
+                pBtn.className = 'absolute top-0 transform -translate-x-1/2 -translate-y-[130%] neo-btn bg-white text-xs sm:text-base px-1 sm:px-3 py-1 sm:py-2 z-20 w-14 sm:w-24 truncate hover:bg-gray-100 transition-colors cursor-pointer';
+                pBtn.style.left = `${getColX(i)}px`;
+                pBtn.innerText = players[i];
+                pBtn.onclick = () => startAnimation(i);
+                
+                // 진행 완료된 상태 복구
+                if (animations.some(a => a.playerIndex === i)) {
+                    pBtn.classList.add('opacity-50', 'pointer-events-none');
+                    pBtn.style.backgroundColor = animations.find(a => a.playerIndex === i).color;
+                    pBtn.style.color = '#fff';
+                }
+                pTrack.appendChild(pBtn);
+
+                // 도착지 라벨
+                const rLbl = document.createElement('div');
+                rLbl.id = `result-lbl-${i}`;
+                rLbl.className = 'absolute top-0 transform -translate-x-1/2 translate-y-[20px] neo-box text-xs sm:text-base px-1 sm:px-3 py-1 sm:py-2 z-10 w-14 sm:w-24 text-center truncate font-bold bg-gray-100';
+                rLbl.style.left = `${getColX(i)}px`;
+                rLbl.innerText = results[i];
+                
+                // 이미 도착한 상태 복구
+                const finishedAnim = animations.find(a => a.endResult === i && a.finished);
+                if (finishedAnim) {
+                    rLbl.style.backgroundColor = finishedAnim.color;
+                    rLbl.style.color = '#fff';
+                }
+                
+                rTrack.appendChild(rLbl);
+            }
+        }
+
+        // --- 애니메이션 및 그리기 로직 ---
+        function drawStaticBoard() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 뼈대 그리기
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#222'; // 완전 검정보다는 살짝 부드러운 검정
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // 세로줄
+            for (let c = 0; c < playerCount; c++) {
+                const x = getColX(c);
+                ctx.beginPath();
+                ctx.moveTo(x, getRowY(0));
+                ctx.lineTo(x, getRowY(maxRows + 1));
+                ctx.stroke();
+            }
+            
+            // 가로줄
+            for (let r = 0; r < maxRows; r++) {
+                for (let c = 0; c < playerCount - 1; c++) {
+                    if (ladderData[r][c]) {
+                        const y = getRowY(r + 1);
+                        ctx.beginPath();
+                        ctx.moveTo(getColX(c), y);
+                        ctx.lineTo(getColX(c + 1), y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // 이미 완료되었거나 멈춰있는 애니메이션 그리기
+            animations.forEach(anim => {
+                drawPath(anim);
+            });
+        }
+
+        function startAnimation(playerIndex) {
+            // 이미 실행중이거나 완료된 플레이어 제외
+            if (animations.some(a => a.playerIndex === playerIndex)) return;
+            
+            const color = pathColors[playerIndex % pathColors.length];
+            const endResult = paths[playerIndex].endResult;
+            
+            animations.push({
+                playerIndex: playerIndex,
+                endResult: endResult,
+                path: paths[playerIndex].points,
+                color: color,
+                currentSegment: 0,
+                progress: 0,
+                speed: 0.1, // 애니메이션 속도
+                finished: false
+            });
+            
+            // 버튼 스타일 변경
+            const pBtn = document.getElementById(`player-btn-${playerIndex}`);
+            if (pBtn) {
+                pBtn.classList.add('opacity-50', 'pointer-events-none');
+                pBtn.style.backgroundColor = color;
+                pBtn.style.color = '#fff';
+            }
+            
+            if (!isAnimating) {
+                isAnimating = true;
+                requestAnimationFrame(drawLoop);
+            }
+        }
+
+        function showAllResults() {
+            for (let i = 0; i < playerCount; i++) {
+                if (!animations.some(a => a.playerIndex === i)) {
+                    startAnimation(i);
+                }
+            }
+            // 모든 애니메이션 속도 극대화
+            animations.forEach(anim => {
+                anim.speed = 1.0;
+            });
+        }
+
+        function drawLoop() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 기본 뼈대
+            drawStaticBoard();
+            
+            let allDone = true;
+            
+            animations.forEach(anim => {
+                // 선 그리기
+                drawPath(anim);
+                
+                // 상태 업데이트
+                if (anim.currentSegment < anim.path.length - 1) {
+                    allDone = false;
+                    anim.progress += anim.speed;
+                    
+                    if (anim.progress >= 1) {
+                        anim.progress = 0;
+                        anim.currentSegment++;
+                    }
+                } else if (!anim.finished) {
+                    // 도착 완료 처리
+                    anim.finished = true;
+                    highlightResult(anim.endResult, anim.color);
+                    showToast(players[anim.playerIndex], results[anim.endResult], anim.color);
+                }
+            });
+            
+            if (!allDone) {
+                requestAnimationFrame(drawLoop);
+            } else {
+                isAnimating = false;
+            }
+        }
+
+        function drawPath(anim) {
+            ctx.beginPath();
+            ctx.strokeStyle = anim.color;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            const pts = anim.path;
+            if(!pts || pts.length === 0) return;
+            
+            ctx.moveTo(pts[0].x, pts[0].y);
+            
+            // 완료된 구간 선 긋기
+            for (let i = 0; i < anim.currentSegment; i++) {
+                ctx.lineTo(pts[i+1].x, pts[i+1].y);
+            }
+            
+            // 현재 진행중인 구간 애니메이션
+            let currentX = pts[anim.currentSegment].x;
+            let currentY = pts[anim.currentSegment].y;
+            
+            if (anim.currentSegment < pts.length - 1) {
+                const start = pts[anim.currentSegment];
+                const end = pts[anim.currentSegment + 1];
+                currentX = start.x + (end.x - start.x) * anim.progress;
+                currentY = start.y + (end.y - start.y) * anim.progress;
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.stroke();
+            
+            // 진행 헤드(동그라미 머리) 그리기 - 네오브루탈리즘 스타일
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = anim.color;
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#000';
+            ctx.stroke();
+        }
+
+        // 결과 강조 표시
+        function highlightResult(resultIndex, color) {
+            const rLbl = document.getElementById(`result-lbl-${resultIndex}`);
+            if (rLbl) {
+                rLbl.style.backgroundColor = color;
+                rLbl.style.color = '#fff';
+                // 살짝 튕기는 애니메이션 효과
+                rLbl.classList.add('transform', 'scale-110', '-translate-y-2');
+                setTimeout(() => {
+                    rLbl.classList.remove('scale-110', '-translate-y-2');
+                }, 300);
+            }
+        }
+
+        // 도착 알림 토스트 팝업
+        function showToast(playerName, resultName, color) {
+            const toast = document.createElement('div');
+            toast.className = 'neo-box px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 transform translate-x-full transition-transform duration-300 pointer-events-auto shadow-neo';
+            toast.style.borderLeftColor = color;
+            toast.style.borderLeftWidth = '12px';
+            
+            toast.innerHTML = `
+                <div class="text-2xl sm:text-3xl">🎉</div>
+                <div>
+                    <div class="text-xs sm:text-sm text-gray-600 font-black">${playerName}</div>
+                    <div class="text-base sm:text-lg font-black text-black">"${resultName}" 당첨!</div>
+                </div>
+            `;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            // 슬라이드 인
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 50);
+            
+            // 일정 시간 후 자동 삭제
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // 앱 실행
+        init();
+
+    </script>
+</body>
+</html>
