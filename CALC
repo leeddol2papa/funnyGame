@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>모던 공학용 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            /* 모바일에서 더블 탭 확대 방지 */
+            touch-action: manipulation; 
+        }
+
+        /* 디스플레이 스크롤바 숨기기 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 버튼 클릭 (터치) 애니메이션 */
+        .btn-press {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+        }
+        .btn-press:active {
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body class="bg-gray-950 min-h-screen flex items-center justify-center p-4 text-gray-100">
+
+    <!-- 계산기 메인 컨테이너 -->
+    <div class="w-full max-w-sm sm:max-w-md bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-800 overflow-hidden flex flex-col">
+        
+        <!-- 디스플레이 영역 -->
+        <div class="p-6 pb-4 bg-gray-900 flex flex-col items-end justify-end space-y-2 h-40">
+            <!-- 수식 표시 -->
+            <div id="expression" class="text-gray-400 text-lg sm:text-xl w-full text-right overflow-x-auto whitespace-nowrap no-scrollbar break-all min-h-[1.75rem]">
+                
+            </div>
+            <!-- 결과 표시 -->
+            <div id="result" class="text-4xl sm:text-5xl font-semibold w-full text-right overflow-x-auto whitespace-nowrap no-scrollbar text-white tracking-tight">
+                0
+            </div>
+        </div>
+
+        <!-- 버튼 그리드 영역 -->
+        <div class="bg-gray-800 p-4 sm:p-6 rounded-t-[2rem] flex-grow grid grid-cols-5 gap-2 sm:gap-3">
+            
+            <!-- 첫 번째 줄 -->
+            <button onclick="toggleDegRad()" id="deg-btn" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">DEG</button>
+            <button onclick="input('sin(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">sin</button>
+            <button onclick="input('cos(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">cos</button>
+            <button onclick="input('tan(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">tan</button>
+            <button onclick="clearAll()" class="btn-press bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-semibold text-sm sm:text-base">AC</button>
+
+            <!-- 두 번째 줄 -->
+            <button onclick="input('!')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">x!</button>
+            <button onclick="input('ln(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">ln</button>
+            <button onclick="input('log(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">log</button>
+            <button onclick="input('√(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">√</button>
+            <button onclick="deleteLast()" class="btn-press bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-semibold text-sm sm:text-base">DEL</button>
+
+            <!-- 세 번째 줄 -->
+            <button onclick="input('π')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">π</button>
+            <button onclick="input('e')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">e</button>
+            <button onclick="input('(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">(</button>
+            <button onclick="input(')')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">)</button>
+            <button onclick="input('^')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">xʸ</button>
+
+            <!-- 네 번째 줄 -->
+            <button onclick="input('7')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">7</button>
+            <button onclick="input('8')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">8</button>
+            <button onclick="input('9')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">9</button>
+            <button onclick="input('÷')" class="btn-press bg-orange-500 text-white hover:bg-orange-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-2xl font-medium">÷</button>
+            <button onclick="input('%')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">%</button>
+
+            <!-- 다섯 번째 줄 -->
+            <button onclick="input('4')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">4</button>
+            <button onclick="input('5')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">5</button>
+            <button onclick="input('6')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">6</button>
+            <button onclick="input('×')" class="btn-press bg-orange-500 text-white hover:bg-orange-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-2xl font-medium">×</button>
+            <button onclick="input('1/(')" class="btn-press bg-gray-700 text-teal-400 hover:bg-gray-600 rounded-2xl flex items-center justify-center h-12 sm:h-14 font-medium text-sm sm:text-base">1/x</button>
+
+            <!-- 여섯 번째 줄 -->
+            <button onclick="input('1')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">1</button>
+            <button onclick="input('2')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">2</button>
+            <button onclick="input('3')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium">3</button>
+            <button onclick="input('-')" class="btn-press bg-orange-500 text-white hover:bg-orange-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-3xl font-medium">-</button>
+            <button onclick="calculate()" class="btn-press bg-teal-500 text-white hover:bg-teal-400 rounded-2xl flex items-center justify-center text-3xl font-medium row-span-2 shadow-lg shadow-teal-500/20">=</button>
+
+            <!-- 일곱 번째 줄 -->
+            <button onclick="input('0')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-xl sm:text-2xl font-medium col-span-2">0</button>
+            <button onclick="input('.')" class="btn-press bg-yellow-500 text-gray-900 hover:bg-yellow-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-2xl font-medium">.</button>
+            <button onclick="input('+')" class="btn-press bg-orange-500 text-white hover:bg-orange-400 rounded-2xl flex items-center justify-center h-12 sm:h-14 text-2xl font-medium">+</button>
+            
+        </div>
+    </div>
+
+    <script>
+        let currentExpression = '';
+        let isDegreeMode = true;
+        let isEvaluated = false;
+
+        const exprDisplay = document.getElementById('expression');
+        const resDisplay = document.getElementById('result');
+        const degBtn = document.getElementById('deg-btn');
+
+        // 입력 처리 함수
+        function input(value) {
+            vibrate(); // 터치 피드백
+            
+            // 계산 직후 숫자나 함수를 누르면 초기화 후 새로 시작
+            if (isEvaluated) {
+                if (/[0-9πea-z\(]/.test(value)) {
+                    currentExpression = value;
+                } else {
+                    currentExpression += value; // 연산자인 경우 이전 결과에 이어서 연산
+                }
+                isEvaluated = false;
+            } else {
+                currentExpression += value;
+            }
+            updateDisplay();
+        }
+
+        // 전체 지우기
+        function clearAll() {
+            vibrate();
+            currentExpression = '';
+            exprDisplay.innerText = '';
+            resDisplay.innerText = '0';
+            isEvaluated = false;
+        }
+
+        // 마지막 글자 지우기
+        function deleteLast() {
+            vibrate();
+            if (isEvaluated) {
+                exprDisplay.innerText = '';
+                isEvaluated = false;
+                return;
+            }
+            
+            // 특정 함수(sin, cos 등)는 통째로 지우기 위한 로직
+            if (currentExpression.endsWith('sin(') || currentExpression.endsWith('cos(') || currentExpression.endsWith('tan(') || currentExpression.endsWith('log(')) {
+                currentExpression = currentExpression.slice(0, -4);
+            } else if (currentExpression.endsWith('ln(')) {
+                currentExpression = currentExpression.slice(0, -3);
+            } else if (currentExpression.endsWith('√(')) {
+                currentExpression = currentExpression.slice(0, -2);
+            } else {
+                currentExpression = currentExpression.slice(0, -1);
+            }
+            
+            updateDisplay();
+            if(currentExpression === '') resDisplay.innerText = '0';
+        }
+
+        // 디그리 / 라디안 모드 토글
+        function toggleDegRad() {
+            vibrate();
+            isDegreeMode = !isDegreeMode;
+            degBtn.innerText = isDegreeMode ? 'DEG' : 'RAD';
+        }
+
+        // 화면 업데이트
+        function updateDisplay() {
+            exprDisplay.innerText = currentExpression;
+            // 디스플레이 스크롤을 항상 오른쪽(최신 입력)으로 유지
+            exprDisplay.scrollLeft = exprDisplay.scrollWidth;
+        }
+
+        // 계산 실행
+        function calculate() {
+            vibrate();
+            if (!currentExpression) return;
+
+            try {
+                let evalStr = currentExpression;
+
+                // 1. 닫히지 않은 괄호 자동 완성
+                const openParenCount = (evalStr.match(/\(/g) || []).length;
+                const closeParenCount = (evalStr.match(/\)/g) || []).length;
+                for (let i = 0; i < openParenCount - closeParenCount; i++) {
+                    evalStr += ')';
+                }
+                currentExpression = evalStr; // 완성된 수식을 UI에 반영
+                updateDisplay();
+
+                // 2. 사용자가 입력한 기호를 자바스크립트 수학식으로 변환
+                // 암시적 곱셈 처리 (예: 2π -> 2*π, 2sin -> 2*sin, (2)(3) -> (2)*(3))
+                evalStr = evalStr.replace(/(\d)(π|e|\(|sin|cos|tan|log|ln|√)/g, '$1*$2');
+                evalStr = evalStr.replace(/\)(\d|π|e|\(|sin|cos|tan|log|ln|√)/g, ')*$1');
+                evalStr = evalStr.replace(/(π|e)(\d|π|e|\(|sin|cos|tan|log|ln|√)/g, '$1*$2');
+
+                // 기본 연산자 변환
+                evalStr = evalStr.replace(/×/g, '*');
+                evalStr = evalStr.replace(/÷/g, '/');
+                evalStr = evalStr.replace(/\^/g, '**');
+                evalStr = evalStr.replace(/π/g, 'Math.PI');
+                evalStr = evalStr.replace(/e/g, 'Math.E');
+
+                // 퍼센트 처리 (숫자 뒤에 %가 오면 /100)
+                evalStr = evalStr.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+
+                // 팩토리얼 처리
+                evalStr = evalStr.replace(/(\d+(?:\.\d+)?)!/g, 'calcFactorial($1)');
+
+                // 공학용 함수 매핑
+                evalStr = evalStr.replace(/√\(/g, 'Math.sqrt(');
+                evalStr = evalStr.replace(/log\(/g, 'Math.log10(');
+                evalStr = evalStr.replace(/ln\(/g, 'Math.log(');
+                
+                // 삼각함수는 디그리/라디안 모드 구분을 위해 커스텀 함수로 래핑
+                evalStr = evalStr.replace(/sin\(/g, 'calcSin(');
+                evalStr = evalStr.replace(/cos\(/g, 'calcCos(');
+                evalStr = evalStr.replace(/tan\(/g, 'calcTan(');
+
+                // 3. 자바스크립트 엔진을 통한 문자열 평가 실행
+                // Function 생성자를 사용하여 안전하게 제한된 스코프에서 수학식 실행
+                let result = new Function('calcSin', 'calcCos', 'calcTan', 'calcFactorial', '"use strict"; return (' + evalStr + ')')(calcSin, calcCos, calcTan, calcFactorial);
+
+                // 4. 결과값 예외 처리 및 정리
+                if (result === Infinity || result === -Infinity) {
+                    resDisplay.innerText = '무한대';
+                } else if (isNaN(result)) {
+                    resDisplay.innerText = '수식 오류';
+                } else {
+                    // 부동소수점 오차 보정 (예: 0.1 + 0.2 = 0.30000000000000004 방지)
+                    result = Math.round(result * 1e12) / 1e12;
+                    
+                    // 큰 숫자 쉼표 포맷팅 및 지수 표기법 처리
+                    resDisplay.innerText = formatNumber(result);
+                    currentExpression = result.toString();
+                }
+                
+                isEvaluated = true;
+
+            } catch (error) {
+                resDisplay.innerText = '수식 오류';
+                isEvaluated = true;
+            }
+        }
+
+        // --- 수학 지원 함수들 ---
+
+        function calcSin(value) {
+            if (isDegreeMode) value = value * (Math.PI / 180);
+            return Math.sin(value);
+        }
+
+        function calcCos(value) {
+            if (isDegreeMode) value = value * (Math.PI / 180);
+            return Math.cos(value);
+        }
+
+        function calcTan(value) {
+            if (isDegreeMode) value = value * (Math.PI / 180);
+            // tan(90deg) 같은 점근선 처리
+            if (Math.abs(Math.cos(value)) < 1e-10) return Infinity;
+            return Math.tan(value);
+        }
+
+        function calcFactorial(n) {
+            n = parseFloat(n);
+            if (!Number.isInteger(n) || n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        function formatNumber(num) {
+            const numStr = num.toString();
+            // 지수 표기법이거나 문자열이 너무 길지 않으면 로케일 포맷팅(쉼표) 적용
+            if (numStr.includes('e') || numStr.length > 15) return numStr;
+            const parts = numStr.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.join('.');
+        }
+
+        // 모바일 기기 터치 피드백 (진동)
+        function vibrate() {
+            if (navigator.vibrate) {
+                navigator.vibrate(40);
+            }
+        }
+
+        // --- 키보드 입력 지원 ---
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+            const allowedKeys = ['0','1','2','3','4','5','6','7','8','9','.','+','-','(',')','%','^'];
+            
+            if (allowedKeys.includes(key)) {
+                input(key);
+            } else if (key === '*') {
+                input('×');
+            } else if (key === '/') {
+                input('÷');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault(); // 기본 폼 제출 방지
+                calculate();
+            } else if (key === 'Backspace') {
+                deleteLast();
+            } else if (key === 'Escape') {
+                clearAll();
+            }
+        });
+
+    </script>
+</body>
+</html>
