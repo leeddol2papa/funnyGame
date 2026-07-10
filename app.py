@@ -9,15 +9,21 @@ from collections import Counter
 st.set_page_config(page_title="YOLO 객체 탐지 및 AI 해석", layout="wide")
 st.title("YOLO 객체 탐지기 (with Gemini AI)")
 
-# 1. Gemini API 설정 (Streamlit Cloud Secrets 활용)
+# 1. Gemini API 키 고정 설정
+# 🔒 주의: GitHub 리포지토리가 반드시 'Private(비공개)'일 때만 실제 키를 입력하세요!
+GEMINI_API_KEY = "여기에_발급받은_실제_API_키를_입력하세요"
+
 try:
-    # Streamlit Cloud 환경에서는 st.secrets에서 키를 가져옵니다.
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    gemini_model = genai.GenerativeModel('gemini-2.5-flash')
-    gemini_ready = True
+    if GEMINI_API_KEY == "여기에_발급받은_실제_API_키를_입력하세요" or not GEMINI_API_KEY:
+        st.sidebar.warning("⚠️ 코드가 수정되지 않았습니다. 변수에 실제 Gemini API 키를 입력해주세요.")
+        gemini_ready = False
+    else:
+        genai.configure(api_key=GEMINI_API_KEY)
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        gemini_ready = True
 except Exception as e:
     gemini_ready = False
-    st.sidebar.warning("⚠️ Gemini API 키가 설정되지 않았습니다. Streamlit Secrets에 'GEMINI_API_KEY'를 추가해주세요.")
+    st.sidebar.error(f"⚠️ Gemini API 인증 실패: {e}")
 
 # 2. 모델 로드 (캐싱하여 재로딩 방지)
 @st.cache_resource
@@ -103,12 +109,12 @@ if uploaded_file is not None:
                     제공된 원본 이미지 시각 정보와 텍스트 탐지 결과를 종합하여 다음을 수행해주세요:
                     1. 현장의 전반적인 상황 및 시각적 상태를 요약해주세요.
                     2. 탐지된 객체들의 관계나 작업 환경적 의미를 해석해주세요.
-                    3. 현장 안전 기준(예: 방진복, 보호장구 착용 상태)이나 기계/설비 품질 관리 측면에서 주의 깊게 봐야 할 점이나 개선 인사이트를 도출해주세요.
+                    3. 현장 안전 기준이나 품질 관리 측면에서 주의 깊게 봐야 할 점이나 개선 인사이트를 도출해주세요.
                     """
                     
                     with st.spinner("Gemini가 시각 정보와 탐지 결과를 종합하여 해석하고 있습니다..."):
                         try:
-                            # 멀티모달: 이미지 객체와 텍스트 프롬프트를 함께 전달
+                            # 멀티모달 분석 실행
                             response = gemini_model.generate_content([image, prompt])
                             st.markdown(response.text)
                         except Exception as e:
